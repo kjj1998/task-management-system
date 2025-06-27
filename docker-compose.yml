@@ -1,0 +1,12 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    ports:
+      - "3306:3306"
+    container_name: taskapi_mysql_dev
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: taskapi
+      MYSQL_USER: taskuser
+      MYSQL_PASSWORD: taskpass
