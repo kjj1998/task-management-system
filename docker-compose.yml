@@ -4,9 +4,22 @@ services:
     restart: always
     ports:
       - "3306:3306"
-    container_name: taskapi_mysql_dev
+    container_name: taskapi_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: taskapi
-      MYSQL_USER: taskuser
-      MYSQL_PASSWORD: taskpass
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - taskapi_network
+
+volumes:
+  mysql_data:
+    name: taskapi_mysql_volume
+
+networks:
+  taskapi_network:
+    name: taskapi_network
+    driver: bridge
