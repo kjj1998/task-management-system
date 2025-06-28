@@ -15,3 +15,6 @@ migrate-up:
 
 migrate-down:
 		migrate -database "mysql://$(DB_USER):$(DB_PASS)@tcp($(DB_HOST):$(DB_PORT))/$(DB)" -path migrations down 1
+
+lint:
+		golangci-lint run

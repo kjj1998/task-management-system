@@ -18,6 +18,7 @@ func Connect() error {
 	cfg.Net = "tcp"
 	cfg.Addr = os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT")
 	cfg.DBName = os.Getenv("DB")
+	cfg.Params = map[string]string{"parseTime": "true"}
 
 	// Get a database handle
 	var err error
@@ -38,7 +39,10 @@ func Connect() error {
 
 func Close() error {
 	if DB != nil {
-		DB.Close()
+		err := DB.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close DB connection: %w", err)
+		}
 	}
 
 	return nil
