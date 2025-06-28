@@ -2,8 +2,8 @@ include .env
 export $(shell sed 's/=.*//' .env)
 
 # Start app
-run:
-		go run cmd/api/main.go
+run-dev:
+		ENV=dev go run cmd/api/main.go
 
 # Start the dev database in container
 start-dev-db:
