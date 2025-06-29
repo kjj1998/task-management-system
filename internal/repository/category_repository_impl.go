@@ -53,7 +53,6 @@ func (r *categoryRepository) GetAllCategoriesForUser(user_id string) ([]models.D
 }
 
 func (r *categoryRepository) Update(name string, color string, id string, user_id string) error {
-	fmt.Println("test")
 	command := "UPDATE categories SET name = ?, color = ? WHERE id = ? AND user_id = ?"
 	result, err := r.db.Exec(command, name, color, id, user_id)
 	if err != nil {
