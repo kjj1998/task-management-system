@@ -1,7 +1,7 @@
 CREATE TABLE tasks (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    category_id INT,
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    category_id CHAR(36),
     title VARCHAR(200) NOT NULL,
     description TEXT,
     priority ENUM('low', 'medium', 'high') DEFAULT 'medium',

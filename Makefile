@@ -13,6 +13,9 @@ start-dev-db:
 migrate-up:
 		migrate -database "mysql://$(DB_USER):$(DB_PASS)@tcp($(DB_HOST):$(DB_PORT))/$(DB)" -path migrations up
 
+migrate-up-once:
+		migrate -database "mysql://$(DB_USER):$(DB_PASS)@tcp($(DB_HOST):$(DB_PORT))/$(DB)" -path migrations up 1
+
 migrate-down:
 		migrate -database "mysql://$(DB_USER):$(DB_PASS)@tcp($(DB_HOST):$(DB_PORT))/$(DB)" -path migrations down 1
 

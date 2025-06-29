@@ -1,6 +1,6 @@
 CREATE TABLE categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
     name VARCHAR(100) NOT NULL,
     color VARCHAR(7) DEFAULT '#007bff',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

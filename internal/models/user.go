@@ -6,7 +6,7 @@ import (
 )
 
 type DBUser struct {
-	ID           uint
+	ID           string
 	Email        string
 	PasswordHash string
 	FirstName    string
@@ -17,7 +17,7 @@ type DBUser struct {
 
 func (u DBUser) String() string {
 	return fmt.Sprintf(
-		"DBUser[ID=%d, Email=%s, FirstName=%s, LastName=%s, CreatedAt=%s, UpdatedAt=%s]",
+		"DBUser[ID=%s, Email=%s, FirstName=%s, LastName=%s, CreatedAt=%s, UpdatedAt=%s]",
 		u.ID,
 		u.Email,
 		u.FirstName,
