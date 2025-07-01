@@ -10,6 +10,33 @@ import (
 
 var DB *sql.DB
 
+func Connect2(user, password, host, port, dbName string) error {
+	// Capture connection properties
+	cfg := mysql.NewConfig()
+	cfg.User = user
+	cfg.Passwd = password
+	cfg.Net = "tcp"
+	cfg.Addr = host + ":" + port
+	cfg.DBName = dbName
+	cfg.Params = map[string]string{"parseTime": "true"}
+
+	// Get a database handle
+	var err error
+	db, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		return fmt.Errorf("failed to open db: %w", err)
+	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		return fmt.Errorf("failed to ping db: %w", pingErr)
+	}
+	fmt.Println("Database Connected!")
+	DB = db
+
+	return nil
+}
+
 func Connect() error {
 	// Capture connection properties
 	cfg := mysql.NewConfig()
