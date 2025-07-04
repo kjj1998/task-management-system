@@ -17,6 +17,12 @@ const (
 	High
 )
 
+const (
+	Pending TaskStatus = iota
+	InProgress
+	Completed
+)
+
 func (p TaskPriority) String() string {
 	switch p {
 	case Low:
@@ -30,12 +36,6 @@ func (p TaskPriority) String() string {
 	}
 }
 
-const (
-	Pending TaskStatus = iota
-	InProgress
-	Completed
-)
-
 func (s TaskStatus) String() string {
 	switch s {
 	case Pending:
@@ -47,36 +47,6 @@ func (s TaskStatus) String() string {
 	default:
 		return "pending"
 	}
-}
-
-type DBTask struct {
-	ID          string
-	UserID      string
-	CategoryID  string
-	Title       string
-	Description string
-	Priority    TaskPriority
-	Status      TaskStatus
-	DueDate     time.Time
-	CompletedAt time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-}
-
-func (t DBTask) String() string {
-	return fmt.Sprintf(
-		"DBTask[ID=%s, UserID=%s, Title=%s, Description=%s, Priority=%s, Status=%s, DueDate=%s, CompletedAt=%s, CreatedAt=%s, UpdatedAt=%s]",
-		t.ID,
-		t.UserID,
-		t.Title,
-		t.Description,
-		t.Priority.String(),
-		t.Status.String(),
-		t.DueDate,
-		t.CompletedAt.Format(time.RFC3339),
-		t.CreatedAt.Format(time.RFC3339),
-		t.UpdatedAt.Format(time.RFC3339),
-	)
 }
 
 func (s TaskStatus) Value() (driver.Value, error) {
@@ -121,6 +91,19 @@ func (s TaskPriority) Value() (driver.Value, error) {
 	return s.String(), nil
 }
 
+func ParsePriorityStatus(s string) (TaskPriority, error) {
+	switch s {
+	case "low":
+		return Low, nil
+	case "medium":
+		return Medium, nil
+	case "high":
+		return High, nil
+	default:
+		return Medium, fmt.Errorf("invalid priority status: %s", s)
+	}
+}
+
 func (s *TaskPriority) Scan(value any) error {
 	var str string
 
@@ -142,15 +125,33 @@ func (s *TaskPriority) Scan(value any) error {
 	return nil
 }
 
-func ParsePriorityStatus(s string) (TaskPriority, error) {
-	switch s {
-	case "low":
-		return Low, nil
-	case "medium":
-		return Medium, nil
-	case "high":
-		return High, nil
-	default:
-		return Medium, fmt.Errorf("invalid priority status: %s", s)
-	}
+type DBTask struct {
+	ID          string
+	UserID      string
+	CategoryID  string
+	Title       string
+	Description string
+	Priority    TaskPriority
+	Status      TaskStatus
+	DueDate     *time.Time
+	CompletedAt *time.Time
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
+}
+
+func (t DBTask) String() string {
+	return fmt.Sprintf(
+		"DBTask[ID=%s, UserID=%s, CategoryID=%s, Title=%s, Description=%s, Priority=%s, Status=%s, DueDate=%s, CompletedAt=%s, CreatedAt=%s, UpdatedAt=%s]",
+		t.ID,
+		t.UserID,
+		t.CategoryID,
+		t.Title,
+		t.Description,
+		t.Priority.String(),
+		t.Status.String(),
+		t.DueDate,
+		t.CompletedAt.Format(time.RFC3339),
+		t.CreatedAt.Format(time.RFC3339),
+		t.UpdatedAt.Format(time.RFC3339),
+	)
 }

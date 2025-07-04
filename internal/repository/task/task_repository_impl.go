@@ -1,4 +1,4 @@
-package repository
+package task
 
 import (
 	"database/sql"
@@ -17,8 +17,8 @@ func NewTaskRepository(db *sql.DB) TaskRepository {
 }
 
 func (t *taskRepository) Create(task *models.DBTask) (string, error) {
-	task_id := uuid.NewString()
 	command := "INSERT INTO tasks (id, user_id, category_id, title, description, priority, status, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	task_id := uuid.NewString()
 	_, err := t.db.Exec(
 		command,
 		task_id,
@@ -37,15 +37,14 @@ func (t *taskRepository) Create(task *models.DBTask) (string, error) {
 	return task_id, nil
 }
 
-func (t *taskRepository) GetAllTasksForUser(user_id string) ([]models.DBTask, error) {
-	var tasks []models.DBTask
-
+func (t *taskRepository) GetAllForUser(user_id string) ([]models.DBTask, error) {
 	query := "SELECT id, user_id, category_id, title, description, priority, status, due_date, completed_at, created_at, updated_at FROM tasks WHERE user_id = ?"
 	rows, err := t.db.Query(query, user_id)
 	if err != nil {
 		return nil, fmt.Errorf("tasksByUser %q: %v", user_id, err)
 	}
 
+	var tasks []models.DBTask
 	for rows.Next() {
 		var task models.DBTask
 		err := rows.Scan(
@@ -74,6 +73,32 @@ func (t *taskRepository) GetAllTasksForUser(user_id string) ([]models.DBTask, er
 	return tasks, nil
 }
 
+func (t *taskRepository) GetById(task_id string) (task models.DBTask, err error) {
+	query := "SELECT * FROM tasks WHERE id = ?"
+	row := t.db.QueryRow(query, task_id)
+	err = row.Scan(
+		&task.ID,
+		&task.UserID,
+		&task.CategoryID,
+		&task.Title,
+		&task.Description,
+		&task.Priority,
+		&task.Status,
+		&task.DueDate,
+		&task.CompletedAt,
+		&task.CreatedAt,
+		&task.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return task, fmt.Errorf("taskById %s: no such task", task_id)
+		}
+		return task, fmt.Errorf("taskById %s: %v", task_id, err)
+	}
+
+	return task, nil
+}
+
 func (t *taskRepository) Update(task *models.DBTask) error {
 	// TODO: Write a function that forms the SQL query when given an input of string[string] map
 	command := "UPDATE tasks SET " +
@@ -85,7 +110,6 @@ func (t *taskRepository) Update(task *models.DBTask) error {
 		"completed_at = ?, " +
 		"updated_at = ? " +
 		"WHERE id = ?"
-
 	result, err := t.db.Exec(
 		command,
 		task.Title,

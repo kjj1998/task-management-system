@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	"database/sql"
@@ -46,6 +46,30 @@ func (r *userRepository) GetById(id string) (user models.DBUser, err error) {
 		}
 		return user, fmt.Errorf("usersById %s: %v", id, err)
 	}
+
+	return user, nil
+}
+
+func (r *userRepository) GetByEmail(email string) (user models.DBUser, err error) {
+	query := "SELECT * FROM users WHERE email = ?"
+	row := r.db.QueryRow(query, email)
+
+	err = row.Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.FirstName,
+		&user.LastName,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("usersByEmail %s: no such user", email)
+		}
+		return user, fmt.Errorf("usersByEmail %s: %v", email, err)
+	}
+
 	return user, nil
 }
 

@@ -10,7 +10,7 @@ type DBCategory struct {
 	UserID    string
 	Name      string
 	Color     string
-	CreatedAt time.Time
+	CreatedAt *time.Time
 }
 
 func (c DBCategory) String() string {

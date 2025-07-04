@@ -1,4 +1,4 @@
-package testhelpers
+package testutils
 
 import (
 	"context"
@@ -17,7 +17,12 @@ type MySQLContainer struct {
 }
 
 func CreateMySQLContainer(ctx context.Context) (*MySQLContainer, error) {
-	absPath, err := filepath.Abs(filepath.Join(".", "init-db.sql"))
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("error getting current directory: %v", err)
+	}
+	fmt.Println("Current working directory:", dir)
+	absPath, err := filepath.Abs(filepath.Join("..", "testutils", "init-test-db.sql"))
 	fmt.Println(absPath)
 	if err != nil {
 		log.Fatal(err)

@@ -19,5 +19,9 @@ migrate-up-once:
 migrate-down:
 		migrate -database "mysql://$(DB_USER):$(DB_PASS)@tcp($(DB_HOST):$(DB_PORT))/$(DB)" -path migrations down 1
 
+# Run all repository test files
+repository-tests:
+		go test ./internal/repository/...
+
 lint:
 		golangci-lint run
