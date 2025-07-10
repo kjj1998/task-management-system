@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/kjj1998/task-management-system/internal/server"
 )
 
 func main() {
@@ -20,4 +22,7 @@ func main() {
 			log.Fatal("Error loading .env file")
 		}
 	}
+
+	server := server.NewTaskManagementSystemServer()
+	log.Fatal(http.ListenAndServe(":8080", server))
 }
