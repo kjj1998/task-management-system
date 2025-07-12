@@ -19,7 +19,7 @@ type DatabaseTaskStore struct {
 func NewDatabaseTaskStore(db *sql.DB, errorHandler *errors.DatabaseErrorHandler) *DatabaseTaskStore {
 	store := &DatabaseTaskStore{}
 
-	store.UserRepository = user.NewUserRepository(db)
+	store.UserRepository = user.NewUserRepository(db, errorHandler)
 	store.CategoryRepository = category.NewCategoryRepository(db, errorHandler)
 	store.TaskRepository = task.NewTaskRepository(db, errorHandler)
 

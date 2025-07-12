@@ -2,11 +2,11 @@ package user_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"testing"
 
 	"github.com/kjj1998/task-management-system/internal/database"
+	"github.com/kjj1998/task-management-system/internal/errors"
 	"github.com/kjj1998/task-management-system/internal/models"
 	"github.com/kjj1998/task-management-system/internal/repository/testutils"
 	"github.com/kjj1998/task-management-system/internal/repository/user"
@@ -35,7 +35,8 @@ func (suite *UserRepoTestSuite) SetupSuite() {
 
 	database.Connect("testuser", "testpass", host, port.Port(), "taskapi")
 	db := database.GetDb()
-	userRepository := user.NewUserRepository(db)
+	dbErrorHandler := errors.NewDatabaseErrorHandler()
+	userRepository := user.NewUserRepository(db, dbErrorHandler)
 	suite.repository = userRepository
 }
 
@@ -48,60 +49,56 @@ func (suite *UserRepoTestSuite) TearDownSuite() {
 func (suite *UserRepoTestSuite) TestUserLifecycle() {
 	t := suite.T()
 
-	user_id, err := suite.repository.Create(&models.DBUser{
-		Email: "jc@email.com", PasswordHash: "dsfdsf!@#!23", FirstName: "Julius", LastName: "Caesar",
+	t.Run("CreateUser", func(t *testing.T) {
+		user := &models.DBUser{
+			Email:        "jc@email.com",
+			PasswordHash: "dsfdsf!@#!23",
+			FirstName:    "Julius",
+			LastName:     "Caesar",
+		}
+
+		created_user, err := suite.repository.Create(user)
+		assert.NoError(t, err)
+		assert.NotNil(t, created_user)
+
+		if t.Failed() {
+			t.Fatal("CreateUser failed, stopping sequential execution")
+		}
 	})
-	assert.NoError(t, err)
-	assert.NotNil(t, user_id)
-}
 
-func (suite *UserRepoTestSuite) TestGetUserByEmail() {
-	t := suite.T()
+	t.Run("GetUserByEmail", func(t *testing.T) {
+		user, err := suite.repository.GetByEmail("john@email.com")
 
-	user, err := suite.repository.GetByEmail("john@email.com")
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, "John", user.FirstName)
-	assert.Equal(t, "Doe", user.LastName)
-	assert.Equal(t, "john@email.com", user.Email)
-}
-
-func (suite *UserRepoTestSuite) TestUpdateUser() {
-	t := suite.T()
-
-	user, err := suite.repository.GetByEmail("john@email.com")
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
-
-	suite.repository.Update(&models.DBUser{Email: "johnathan@email.com", FirstName: "Johnathan", LastName: "Doe", ID: user.ID})
-
-	user, err = suite.repository.GetById(user.ID)
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, "Johnathan", user.FirstName)
-	assert.Equal(t, "Doe", user.LastName)
-	assert.Equal(t, "johnathan@email.com", user.Email)
-}
-
-func (suite *UserRepoTestSuite) TestDeleteUser() {
-	t := suite.T()
-
-	user_id, err := suite.repository.Create(&models.DBUser{
-		Email: "jason@email.com", PasswordHash: "dsfdsf!@#!23", FirstName: "Jason", LastName: "Bourne",
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, "John", user.FirstName)
+		assert.Equal(t, "Doe", user.LastName)
+		assert.Equal(t, "john@email.com", user.Email)
 	})
-	assert.NoError(t, err)
-	assert.NotNil(t, user_id)
 
-	user, err := suite.repository.GetByEmail("jason@email.com")
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
+	t.Run("UpdateUser", func(t *testing.T) {
+		user, err := suite.repository.GetByEmail("john@email.com")
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
 
-	err = suite.repository.Delete(user.ID)
-	assert.NoError(t, err)
+		suite.repository.Update(&models.DBUser{Email: "johnathan@email.com", FirstName: "Johnathan", LastName: "Doe", ID: user.ID})
 
-	_, err = suite.repository.GetById(user.ID)
-	expectedErrorMessage := fmt.Sprintf("usersById %s: no such user", user_id)
-	assert.Contains(t, err.Error(), expectedErrorMessage)
+		user, err = suite.repository.GetById(user.ID)
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, "Johnathan", user.FirstName)
+		assert.Equal(t, "Doe", user.LastName)
+		assert.Equal(t, "johnathan@email.com", user.Email)
+	})
+
+	t.Run("DeleteUser", func(t *testing.T) {
+		err := suite.repository.Delete("1244ABC")
+		assert.NoError(t, err)
+
+		_, err = suite.repository.GetById("1244ABC")
+		expectedErrorMessage := "Resource not found, sql: no rows in result set"
+		assert.Contains(t, err.Error(), expectedErrorMessage)
+	})
 }
 
 func TestCustomerRepoTestSuite(t *testing.T) {
