@@ -20,7 +20,7 @@ func NewDatabaseTaskStore(db *sql.DB, errorHandler *errors.DatabaseErrorHandler)
 	store := &DatabaseTaskStore{}
 
 	store.UserRepository = user.NewUserRepository(db)
-	store.CategoryRepository = category.NewCategoryRepository(db)
+	store.CategoryRepository = category.NewCategoryRepository(db, errorHandler)
 	store.TaskRepository = task.NewTaskRepository(db, errorHandler)
 
 	return store
