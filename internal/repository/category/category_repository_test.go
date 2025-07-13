@@ -38,7 +38,7 @@ func (suite *CategoryRepoTestSuite) SetupSuite() {
 	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
-	categoryRepository := category.NewCategoryRepository(db, dbErrorHandler)
+	categoryRepository := category.NewCategoryRepository(db, dbErrorHandler, logger)
 	suite.repository = categoryRepository
 }
 

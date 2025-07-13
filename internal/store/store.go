@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"log/slog"
 
 	"github.com/kjj1998/task-management-system/internal/errors"
 	"github.com/kjj1998/task-management-system/internal/models"
@@ -16,11 +17,11 @@ type DatabaseTaskStore struct {
 	TaskRepository     task.TaskRepository
 }
 
-func NewDatabaseTaskStore(db *sql.DB, errorHandler *errors.DatabaseErrorHandler) *DatabaseTaskStore {
+func NewDatabaseTaskStore(db *sql.DB, errorHandler *errors.DatabaseErrorHandler, logger *slog.Logger) *DatabaseTaskStore {
 	store := &DatabaseTaskStore{}
 
 	store.UserRepository = user.NewUserRepository(db, errorHandler)
-	store.CategoryRepository = category.NewCategoryRepository(db, errorHandler)
+	store.CategoryRepository = category.NewCategoryRepository(db, errorHandler, logger)
 	store.TaskRepository = task.NewTaskRepository(db, errorHandler)
 
 	return store

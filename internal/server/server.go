@@ -32,7 +32,7 @@ func NewTaskManagementSystemServer(logger *slog.Logger) *TaskManagementSystemSer
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
 
-	store := store.NewDatabaseTaskStore(db, dbErrorHandler)
+	store := store.NewDatabaseTaskStore(db, dbErrorHandler, logger)
 	taskService := services.NewTaskService(store)
 	taskHandler := handlers.NewTasksHandler(taskService)
 
