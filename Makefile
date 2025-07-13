@@ -5,9 +5,12 @@ export $(shell sed 's/=.*//' .env)
 run-dev:
 		ENV=dev go run cmd/api/main.go
 
-# Start the dev database in container
-start-dev-db:
-		docker compose up -d
+build-dev:
+		docker compose build --no-cache
+
+# Start app and db in dev environment:
+start-dev:
+		docker compose down && docker compose up
 
 # Run migrations
 migrate-up:

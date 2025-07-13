@@ -7,6 +7,7 @@ import (
 
 	"github.com/kjj1998/task-management-system/internal/database"
 	"github.com/kjj1998/task-management-system/internal/errors"
+	"github.com/kjj1998/task-management-system/internal/logger"
 	"github.com/kjj1998/task-management-system/internal/models"
 	"github.com/kjj1998/task-management-system/internal/repository/category"
 	"github.com/kjj1998/task-management-system/internal/repository/testutils"
@@ -22,6 +23,7 @@ type CategoryRepoTestSuite struct {
 }
 
 func (suite *CategoryRepoTestSuite) SetupSuite() {
+	logger := logger.NewLogger("test")
 	suite.ctx = context.Background()
 
 	mySQLContainer, err := testutils.CreateMySQLContainer(suite.ctx)
@@ -33,7 +35,7 @@ func (suite *CategoryRepoTestSuite) SetupSuite() {
 	host, _ := mySQLContainer.Container.Host(suite.ctx)
 	port, _ := mySQLContainer.Container.MappedPort(suite.ctx, "3306")
 
-	database.Connect("testuser", "testpass", host, port.Port(), "taskapi")
+	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
 	categoryRepository := category.NewCategoryRepository(db, dbErrorHandler)

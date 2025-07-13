@@ -3,13 +3,14 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/kjj1998/task-management-system/internal/database"
 	"github.com/kjj1998/task-management-system/internal/errors"
 	"github.com/kjj1998/task-management-system/internal/handlers"
+	"github.com/kjj1998/task-management-system/internal/middleware"
 	"github.com/kjj1998/task-management-system/internal/services"
 	"github.com/kjj1998/task-management-system/internal/store"
 )
@@ -20,10 +21,13 @@ type TaskManagementSystemServer struct {
 	http.Handler
 }
 
-func NewTaskManagementSystemServer() *TaskManagementSystemServer {
-	err := database.Connect(os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB"))
+func NewTaskManagementSystemServer(logger *slog.Logger) *TaskManagementSystemServer {
+	err := database.Connect(os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB"), logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("server startup failed due to database connection",
+			slog.String("error", err.Error()),
+			slog.String("component", "server"),
+		)
 	}
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
@@ -39,7 +43,8 @@ func NewTaskManagementSystemServer() *TaskManagementSystemServer {
 	router.Handle("/tasks", http.HandlerFunc(taskHandler.HandleTasks))
 	router.Handle("/healthcheck", http.HandlerFunc(t.healthcheckHandler))
 
-	t.Handler = http.StripPrefix("/api", router)
+	apiRouter := http.StripPrefix("/api", router)
+	t.Handler = middleware.LoggingMiddleware(logger)(apiRouter)
 
 	return t
 }

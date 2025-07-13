@@ -37,7 +37,6 @@ func (h *TaskHandlers) HandleSingleTask(w http.ResponseWriter, r *http.Request) 
 		}
 
 		task, err := h.taskService.GetTask(w, taskID)
-		fmt.Println("here 2: ", err)
 
 		if err != nil {
 			errors.HandleError(w, err)
