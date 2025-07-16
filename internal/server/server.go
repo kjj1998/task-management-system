@@ -42,9 +42,11 @@ func NewTaskManagementSystemServer(logger *slog.Logger) *TaskManagementSystemSer
 	router.Handle("/tasks/", http.HandlerFunc(taskHandler.HandleSingleTask))
 	router.Handle("/tasks", http.HandlerFunc(taskHandler.HandleTasks))
 	router.Handle("/healthcheck", http.HandlerFunc(t.healthcheckHandler))
-
 	apiRouter := http.StripPrefix("/api", router)
-	t.Handler = middleware.LoggingMiddleware(logger)(apiRouter)
+
+	corsConfig := middleware.DefaultCORSConfig()
+	handler := middleware.CORSMiddleware(corsConfig)(apiRouter)
+	t.Handler = middleware.LoggingMiddleware(logger)(handler)
 
 	return t
 }
