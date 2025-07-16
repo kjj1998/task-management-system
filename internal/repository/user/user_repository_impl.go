@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/kjj1998/task-management-system/internal/errors"
@@ -21,12 +22,14 @@ const (
 type userRepository struct {
 	db           *sql.DB
 	errorHandler *errors.DatabaseErrorHandler
+	logger       *slog.Logger
 }
 
-func NewUserRepository(db *sql.DB, errorHandler *errors.DatabaseErrorHandler) UserRepository {
+func NewUserRepository(db *sql.DB, errorHandler *errors.DatabaseErrorHandler, logger *slog.Logger) UserRepository {
 	return &userRepository{
 		db:           db,
 		errorHandler: errorHandler,
+		logger:       logger,
 	}
 }
 
@@ -59,6 +62,8 @@ func (u *userRepository) validateRowsAffected(result sql.Result, operation strin
 }
 
 func (u *userRepository) Create(user *models.DBUser) (*models.DBUser, error) {
+	u.logger.Debug("creating user", slog.String("email", user.Email))
+
 	tx, err := u.db.Begin()
 	if err != nil {
 		return nil, u.errorHandler.HandleDatabaseError("CreateUser", err)
@@ -83,31 +88,39 @@ func (u *userRepository) Create(user *models.DBUser) (*models.DBUser, error) {
 		return nil, u.errorHandler.HandleDatabaseError("CreateUser", err)
 	}
 
+	u.logger.Info("created user", slog.String("user_id", createdUser.ID))
 	return &createdUser, nil
 }
 
 func (u *userRepository) GetById(id string) (*models.DBUser, error) {
+	u.logger.Debug("get user by id", slog.String("user_id", id))
+
 	row := u.db.QueryRow(getUserByIDQuery, id)
 	user, err := u.scanDBUser(row)
 	if err != nil {
 		return nil, u.errorHandler.HandleDatabaseError("GetUserByID", err)
 	}
 
+	u.logger.Info("got user", slog.String("user_id", id))
 	return user, nil
 }
 
 func (u *userRepository) GetByEmail(email string) (*models.DBUser, error) {
-	query := "SELECT * FROM users WHERE email = ?"
-	row := u.db.QueryRow(query, email)
+	u.logger.Debug("get user by email", slog.String("email", email))
+
+	row := u.db.QueryRow(getUserByEmail, email)
 	user, err := u.scanDBUser(row)
 	if err != nil {
 		return nil, u.errorHandler.HandleDatabaseError("GetUserByEmail", err)
 	}
 
+	u.logger.Info("got user by email", slog.String("email", email))
 	return user, nil
 }
 
 func (u *userRepository) Delete(id string) error {
+	u.logger.Debug("delete user", slog.String("user_id", id))
+
 	tx, err := u.db.Begin()
 	if err != nil {
 		return u.errorHandler.HandleDatabaseError("DeleteUser", err)
@@ -128,10 +141,13 @@ func (u *userRepository) Delete(id string) error {
 		return u.errorHandler.HandleDatabaseError("DeleteUser", err)
 	}
 
+	u.logger.Info("deleted user", slog.String("user_id", id))
 	return nil
 }
 
 func (u *userRepository) Update(user *models.DBUser) error {
+	u.logger.Debug("update user", slog.String("user_id", user.ID))
+
 	tx, err := u.db.Begin()
 	if err != nil {
 		return u.errorHandler.HandleDatabaseError("UpdateUser", err)
@@ -159,5 +175,6 @@ func (u *userRepository) Update(user *models.DBUser) error {
 		return u.errorHandler.HandleDatabaseError("UpdateUser", err)
 	}
 
+	u.logger.Info("updated user", slog.String("user_id", user.ID))
 	return nil
 }

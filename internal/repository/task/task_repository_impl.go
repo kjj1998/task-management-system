@@ -3,6 +3,8 @@ package task
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kjj1998/task-management-system/internal/errors"
@@ -21,12 +23,14 @@ const (
 type taskRepository struct {
 	db           *sql.DB
 	errorHandler *errors.DatabaseErrorHandler
+	logger       *slog.Logger
 }
 
-func NewTaskRepository(db *sql.DB, errorHandler *errors.DatabaseErrorHandler) TaskRepository {
+func NewTaskRepository(db *sql.DB, errorHandler *errors.DatabaseErrorHandler, logger *slog.Logger) TaskRepository {
 	return &taskRepository{
 		db:           db,
 		errorHandler: errorHandler,
+		logger:       logger,
 	}
 }
 
@@ -59,6 +63,7 @@ func (t *taskRepository) validateRowsAffected(result sql.Result, operation strin
 }
 
 func (t *taskRepository) Create(task *models.DBTask) (*models.DBTask, error) {
+	t.logger.Debug("creating task", slog.String("user_id", task.UserID))
 	tx, err := t.db.Begin()
 	if err != nil {
 		return nil, t.errorHandler.HandleDatabaseError("CreateTask", err)
@@ -83,10 +88,12 @@ func (t *taskRepository) Create(task *models.DBTask) (*models.DBTask, error) {
 		return nil, t.errorHandler.HandleDatabaseError("CreateTask", err)
 	}
 
+	t.logger.Info("task created", slog.String("task_id", createdTask.ID), slog.String("creation_time", createdTask.CreatedAt.Format(time.RFC3339)))
 	return &createdTask, nil
 }
 
 func (t *taskRepository) GetAllForUser(user_id string) ([]models.DBTask, error) {
+	t.logger.Debug("getting all tasks for a user", slog.String("user_id", user_id))
 	rows, err := t.db.Query(getAllTasksForUser, user_id)
 	if err != nil {
 		return nil, t.errorHandler.HandleDatabaseError("GetAllTasksForUser", err)
@@ -105,20 +112,26 @@ func (t *taskRepository) GetAllForUser(user_id string) ([]models.DBTask, error) 
 		return nil, t.errorHandler.HandleDatabaseError("GetAllTasksForUser", err)
 	}
 
+	t.logger.Info("got all tasks for user", slog.String("user_id", user_id))
 	return tasks, nil
 }
 
 func (t *taskRepository) GetById(task_id string) (*models.DBTask, error) {
+	t.logger.Debug("getting task by ID", slog.String("task_id", task_id))
+
 	row := t.db.QueryRow(getTaskByIDQuery, task_id)
 	task, err := t.scanDBTask(row)
 	if err != nil {
 		return nil, t.errorHandler.HandleDatabaseError("GetTaskByID", err)
 	}
 
+	t.logger.Info("got task", slog.String("task_id", task_id))
 	return task, nil
 }
 
 func (t *taskRepository) Update(task *models.DBTask) error {
+	t.logger.Debug("updating task", slog.String("task_id", task.ID))
+
 	tx, err := t.db.Begin()
 	if err != nil {
 		return t.errorHandler.HandleDatabaseError("UpdateTask", err)
@@ -149,10 +162,13 @@ func (t *taskRepository) Update(task *models.DBTask) error {
 		return t.errorHandler.HandleDatabaseError("UpdateTask", err)
 	}
 
+	t.logger.Info("updated task", slog.String("task_id", task.ID))
 	return nil
 }
 
 func (t *taskRepository) Delete(id string) error {
+	t.logger.Debug("deleting task", slog.String("task_id", id))
+
 	tx, err := t.db.Begin()
 	if err != nil {
 		return t.errorHandler.HandleDatabaseError("DeleteTask", err)
@@ -173,5 +189,6 @@ func (t *taskRepository) Delete(id string) error {
 		return t.errorHandler.HandleDatabaseError("DeleteTask", err)
 	}
 
+	t.logger.Info("deleted task", slog.String("task_id", id))
 	return nil
 }

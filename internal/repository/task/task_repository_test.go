@@ -39,7 +39,7 @@ func (suite *TaskRepoTestSuite) SetupSuite() {
 	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
-	taskRepository := task.NewTaskRepository(db, dbErrorHandler)
+	taskRepository := task.NewTaskRepository(db, dbErrorHandler, logger)
 	suite.repository = taskRepository
 }
 

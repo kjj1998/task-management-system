@@ -119,7 +119,7 @@ func (c *categoryRepository) GetAllForUser(user_id string) ([]models.DBCategory,
 		return nil, c.errorHandler.HandleDatabaseError("GetAllCategoriesForUser", err)
 	}
 
-	c.logger.Debug("fetched categories", slog.Int("count", len(categories)))
+	c.logger.Debug("categories retrieved", slog.String("user_id", user_id), slog.Int("count", len(categories)))
 	return categories, nil
 }
 
@@ -134,6 +134,7 @@ func (c *categoryRepository) GetById(category_id string) (*models.DBCategory, er
 		return nil, c.errorHandler.HandleDatabaseError("GetCategoryByID", err)
 	}
 
+	c.logger.Info("category retrieved", slog.String("category_id", category.ID))
 	return category, nil
 }
 
@@ -174,17 +175,17 @@ func (c *categoryRepository) Delete(category_id string) error {
 	result, err := c.db.Exec(command, category_id)
 	if err != nil {
 		c.logger.Error("failed to delete category", slog.String("error", err.Error()))
-		return fmt.Errorf("deleteCategory: %v", err)
+		return c.errorHandler.HandleDatabaseError("DeleteCategory", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		c.logger.Error("failed to check deletion result", slog.String("error", err.Error()))
-		return fmt.Errorf("deleteCategory: could not fetch rows affected: %v", err)
+		return c.errorHandler.HandleDatabaseError("DeleteCategory", err)
 	}
 	if rowsAffected == 0 {
 		c.logger.Warn("category not found for deletion", slog.String("category_id", category_id))
-		return fmt.Errorf("deleteCategory: no category found with id %s", category_id)
+		return c.errorHandler.HandleDatabaseError("DeleteCategory", err)
 	}
 
 	c.logger.Info("category deleted", slog.String("category_id", category_id))

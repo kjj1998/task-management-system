@@ -38,7 +38,7 @@ func (suite *UserRepoTestSuite) SetupSuite() {
 	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
-	userRepository := user.NewUserRepository(db, dbErrorHandler)
+	userRepository := user.NewUserRepository(db, dbErrorHandler, logger)
 	suite.repository = userRepository
 }
 
