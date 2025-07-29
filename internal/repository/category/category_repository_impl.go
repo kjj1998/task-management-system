@@ -68,7 +68,11 @@ func (c *categoryRepository) Create(category *models.DBCategory) (*models.DBCate
 		c.logger.Error("failed to create category", slog.String("error", err.Error()))
 		return nil, c.errorHandler.HandleDatabaseError("CreateCategory", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			c.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	category_id := uuid.NewString()
 
@@ -146,7 +150,11 @@ func (c *categoryRepository) Update(category *models.DBCategory) error {
 		c.logger.Error("failed to update category", slog.String("error", err.Error()))
 		return c.errorHandler.HandleDatabaseError("UpdateCategory", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			c.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	result, err := tx.Exec(updateCategoryQuery, category.Name, category.Color, category.ID)
 	if err != nil {

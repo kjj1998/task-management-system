@@ -5,14 +5,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"time"
-)
 
-type ErrorResponseWrapper struct {
-	Error     *AppError `json:"error"`
-	RequestID string    `json:"request_id,omitempty"`
-	Timestamp string    `json:"timestamp,omitempty"`
-}
+	"github.com/kjj1998/task-management-system/internal/models"
+)
 
 func HandleError(w http.ResponseWriter, err error, logger *slog.Logger) {
 	var appErr *AppError
@@ -36,10 +31,13 @@ func HandleError(w http.ResponseWriter, err error, logger *slog.Logger) {
 		)
 	}
 
-	response := ErrorResponseWrapper{
-		Error:     appErr,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	errorInfo := &models.ErrorInfo{
+		Code:    appErr.Code,
+		Message: appErr.Message,
+		Details: appErr.Details,
 	}
+
+	response := models.NewErrorResponse("An error occurred", errorInfo)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(appErr.StatusCode)

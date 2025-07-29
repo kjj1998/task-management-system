@@ -35,7 +35,8 @@ func (suite *UserRepoTestSuite) SetupSuite() {
 	host, _ := mySQLContainer.Container.Host(suite.ctx)
 	port, _ := mySQLContainer.Container.MappedPort(suite.ctx, "3306")
 
-	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
+	err = database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
+	suite.Require().NoError(err, "Failed to connect to test database")
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
 	userRepository := user.NewUserRepository(db, dbErrorHandler, logger)
@@ -83,7 +84,8 @@ func (suite *UserRepoTestSuite) TestUserLifecycle() {
 		assert.NoError(t, err)
 		assert.NotNil(t, user)
 
-		suite.repository.Update(&models.DBUser{Email: "johnathan@email.com", FirstName: "Johnathan", LastName: "Doe", ID: user.ID})
+		err = suite.repository.Update(&models.DBUser{Email: "johnathan@email.com", FirstName: "Johnathan", LastName: "Doe", ID: user.ID})
+		assert.NoError(t, err)
 
 		user, err = suite.repository.GetById(user.ID)
 		assert.NoError(t, err)

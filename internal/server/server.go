@@ -11,6 +11,7 @@ import (
 	"github.com/kjj1998/task-management-system/internal/errors"
 	"github.com/kjj1998/task-management-system/internal/handlers"
 	"github.com/kjj1998/task-management-system/internal/middleware"
+	"github.com/kjj1998/task-management-system/internal/models"
 	"github.com/kjj1998/task-management-system/internal/services"
 	"github.com/kjj1998/task-management-system/internal/store"
 )
@@ -52,10 +53,11 @@ func NewTaskManagementSystemServer(logger *slog.Logger) *TaskManagementSystemSer
 }
 
 func (t *TaskManagementSystemServer) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	health := map[string]string{"healthcheck": "online"}
+	health := map[string]string{"status": "online"}
 
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(health)
+	response := models.NewSuccessResponse("Service is healthy", health)
+	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to encode response: %v", err), http.StatusInternalServerError)
 	}

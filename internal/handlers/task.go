@@ -53,7 +53,8 @@ func (h *TaskHandlers) GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(task)
+	response := models.NewSuccessResponse("Task retrieved successfully", task)
+	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		errors.HandleError(w, err, h.logger)
 	}
@@ -85,7 +86,8 @@ func (h *TaskHandlers) GetTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(tasks)
+	response := models.NewSuccessResponse("Tasks retrieved successfully", tasks)
+	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		errors.HandleError(w, err, h.logger)
 	}
@@ -98,7 +100,11 @@ func (h *TaskHandlers) CreateTask(w http.ResponseWriter, r *http.Request) {
 		errors.HandleError(w, parsingError, h.logger)
 		return
 	}
-	defer r.Body.Close()
+	defer func() {
+		if closeErr := r.Body.Close(); closeErr != nil {
+			h.logger.Warn("failed to close request body", slog.String("error", closeErr.Error()))
+		}
+	}()
 
 	var task models.DBTask
 	err = json.Unmarshal(body, &task)
@@ -118,11 +124,7 @@ func (h *TaskHandlers) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Location", fmt.Sprintf("/tasks/%s", createdTask.ID))
 	w.WriteHeader(http.StatusCreated)
 
-	response := models.CreateTaskResponse{
-		ID:        createdTask.ID,
-		Message:   "Task created successfully",
-		CreatedAt: *createdTask.CreatedAt,
-	}
+	response := models.NewSuccessResponse("Task created successfully", createdTask)
 
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {

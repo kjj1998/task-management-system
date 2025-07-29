@@ -35,7 +35,8 @@ func (suite *CategoryRepoTestSuite) SetupSuite() {
 	host, _ := mySQLContainer.Container.Host(suite.ctx)
 	port, _ := mySQLContainer.Container.MappedPort(suite.ctx, "3306")
 
-	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
+	err = database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
+	suite.Require().NoError(err, "Failed to connect to test database")
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
 	categoryRepository := category.NewCategoryRepository(db, dbErrorHandler, logger)
@@ -82,7 +83,8 @@ func (suite *CategoryRepoTestSuite) TestCategoryRepositoryOperations() {
 			Name:   "Do by today",
 			Color:  "#ffff00",
 		}
-		suite.repository.Update(category)
+		err := suite.repository.Update(category)
+		assert.NoError(t, err)
 
 		updated_category, err := suite.repository.GetById("2345SDSXAS")
 		assert.NoError(t, err)

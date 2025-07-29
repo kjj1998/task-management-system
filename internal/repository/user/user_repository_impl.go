@@ -68,7 +68,11 @@ func (u *userRepository) Create(user *models.DBUser) (*models.DBUser, error) {
 	if err != nil {
 		return nil, u.errorHandler.HandleDatabaseError("CreateUser", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			u.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	userID := uuid.NewString()
 
@@ -125,7 +129,11 @@ func (u *userRepository) Delete(id string) error {
 	if err != nil {
 		return u.errorHandler.HandleDatabaseError("DeleteUser", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			u.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	result, err := tx.Exec(deleteUserQuery, id)
 	if err != nil {
@@ -152,7 +160,11 @@ func (u *userRepository) Update(user *models.DBUser) error {
 	if err != nil {
 		return u.errorHandler.HandleDatabaseError("UpdateUser", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			u.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	result, err := tx.Exec(
 		updateUserQuery,

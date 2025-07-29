@@ -68,7 +68,11 @@ func (t *taskRepository) Create(task *models.DBTask) (*models.DBTask, error) {
 	if err != nil {
 		return nil, t.errorHandler.HandleDatabaseError("CreateTask", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			t.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	task_id := uuid.NewString()
 
@@ -136,7 +140,11 @@ func (t *taskRepository) Update(task *models.DBTask) error {
 	if err != nil {
 		return t.errorHandler.HandleDatabaseError("UpdateTask", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			t.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	result, err := tx.Exec(
 		updateTaskQuery,
@@ -173,7 +181,11 @@ func (t *taskRepository) Delete(id string) error {
 	if err != nil {
 		return t.errorHandler.HandleDatabaseError("DeleteTask", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			t.logger.Warn("failed to rollback transaction", slog.String("error", rollbackErr.Error()))
+		}
+	}()
 
 	result, err := tx.Exec(deleteTaskQuery, id)
 	if err != nil {

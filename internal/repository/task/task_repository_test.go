@@ -36,7 +36,8 @@ func (suite *TaskRepoTestSuite) SetupSuite() {
 	host, _ := mySQLContainer.Container.Host(suite.ctx)
 	port, _ := mySQLContainer.Container.MappedPort(suite.ctx, "3306")
 
-	database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
+	err = database.Connect("testuser", "testpass", host, port.Port(), "taskapi", logger)
+	suite.Require().NoError(err, "Failed to connect to test database")
 	db := database.GetDb()
 	dbErrorHandler := errors.NewDatabaseErrorHandler()
 	taskRepository := task.NewTaskRepository(db, dbErrorHandler, logger)
