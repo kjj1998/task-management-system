@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/kjj1998/task-management-system/internal/models"
@@ -20,7 +19,6 @@ func NewTaskService(taskStore *store.DatabaseTaskStore) *TaskService {
 
 func (s *TaskService) GetTask(w http.ResponseWriter, task_id string) (*models.DBTask, error) {
 	task, err := s.taskStore.TaskRepository.GetById(task_id)
-	fmt.Println("error: ", err)
 	if err != nil {
 		return nil, err
 	}

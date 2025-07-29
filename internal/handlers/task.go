@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -14,10 +15,11 @@ import (
 
 type TaskHandlers struct {
 	taskService *services.TaskService
+	logger      *slog.Logger
 }
 
-func NewTasksHandler(taskService *services.TaskService) *TaskHandlers {
-	return &TaskHandlers{taskService: taskService}
+func NewTasksHandler(taskService *services.TaskService, logger *slog.Logger) *TaskHandlers {
+	return &TaskHandlers{taskService: taskService, logger: logger}
 }
 
 func extractTaskID(path string) string {
@@ -30,83 +32,100 @@ func extractTaskID(path string) string {
 func (h *TaskHandlers) HandleSingleTask(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		taskID := extractTaskID(r.URL.Path)
-		if taskID == "" {
-			http.Error(w, "Task ID is required", http.StatusBadRequest)
-			return
-		}
+		h.GetTaskByID(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
 
-		task, err := h.taskService.GetTask(w, taskID)
+func (h *TaskHandlers) GetTaskByID(w http.ResponseWriter, r *http.Request) {
+	taskID := extractTaskID(r.URL.Path)
+	if taskID == "" {
+		validationError := errors.NewBadRequestError("Task ID is required", nil)
+		errors.HandleError(w, validationError, h.logger)
+		return
+	}
 
-		if err != nil {
-			errors.HandleError(w, err)
-			return
-		}
+	task, err := h.taskService.GetTask(w, taskID)
+	if err != nil {
+		errors.HandleError(w, err, h.logger)
+		return
+	}
 
-		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(task)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to encode response: %v", err), http.StatusInternalServerError)
-		}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(task)
+	if err != nil {
+		errors.HandleError(w, err, h.logger)
 	}
 }
 
 func (h *TaskHandlers) HandleTasks(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		userID := r.URL.Query().Get("userId")
-		if userID == "" {
-			http.Error(w, "userId parameter is required", http.StatusBadRequest)
-			return
-		}
-
-		tasks, err := h.taskService.GetTasksByUserID(userID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(tasks)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to encode response: %v", err), http.StatusInternalServerError)
-		}
+		h.GetTasks(w, r)
 	case http.MethodPost:
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Error reading request body", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
+		h.CreateTask(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
 
-		var task models.DBTask
-		err = json.Unmarshal(body, &task)
-		if err != nil {
-			http.Error(w, "Error parsing JSON", http.StatusBadRequest)
-			return
-		}
+func (h *TaskHandlers) GetTasks(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("userId")
+	if userID == "" {
+		validationError := errors.NewBadRequestError("User ID parameter is required", nil)
+		errors.HandleError(w, validationError, h.logger)
+		return
+	}
 
-		createdTask, err := h.taskService.CreateTask(task)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	tasks, err := h.taskService.GetTasksByUserID(userID)
+	if err != nil {
+		errors.HandleError(w, err, h.logger)
+		return
+	}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Location", fmt.Sprintf("/tasks/%s", createdTask.ID))
-		w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(tasks)
+	if err != nil {
+		errors.HandleError(w, err, h.logger)
+	}
+}
 
-		response := models.CreateTaskResponse{
-			ID:        createdTask.ID,
-			Message:   "Task created successfully",
-			CreatedAt: *createdTask.CreatedAt,
-		}
+func (h *TaskHandlers) CreateTask(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		parsingError := errors.NewBadRequestError("Error reading request body", nil)
+		errors.HandleError(w, parsingError, h.logger)
+		return
+	}
+	defer r.Body.Close()
 
-		err = json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to encode response: %v", err), http.StatusInternalServerError)
-		}
-	case http.MethodDelete:
+	var task models.DBTask
+	err = json.Unmarshal(body, &task)
+	if err != nil {
+		parsingError := errors.NewBadRequestError("Error parsing json body", nil)
+		errors.HandleError(w, parsingError, h.logger)
+		return
+	}
 
+	createdTask, err := h.taskService.CreateTask(task)
+	if err != nil {
+		errors.HandleError(w, err, h.logger)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Location", fmt.Sprintf("/tasks/%s", createdTask.ID))
+	w.WriteHeader(http.StatusCreated)
+
+	response := models.CreateTaskResponse{
+		ID:        createdTask.ID,
+		Message:   "Task created successfully",
+		CreatedAt: *createdTask.CreatedAt,
+	}
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		errors.HandleError(w, err, h.logger)
 	}
 }

@@ -20,9 +20,9 @@ type DatabaseTaskStore struct {
 func NewDatabaseTaskStore(db *sql.DB, errorHandler *errors.DatabaseErrorHandler, logger *slog.Logger) *DatabaseTaskStore {
 	store := &DatabaseTaskStore{}
 
-	store.UserRepository = user.NewUserRepository(db, errorHandler)
+	store.UserRepository = user.NewUserRepository(db, errorHandler, logger)
 	store.CategoryRepository = category.NewCategoryRepository(db, errorHandler, logger)
-	store.TaskRepository = task.NewTaskRepository(db, errorHandler)
+	store.TaskRepository = task.NewTaskRepository(db, errorHandler, logger)
 
 	return store
 }

@@ -34,7 +34,7 @@ func NewTaskManagementSystemServer(logger *slog.Logger) *TaskManagementSystemSer
 
 	store := store.NewDatabaseTaskStore(db, dbErrorHandler, logger)
 	taskService := services.NewTaskService(store)
-	taskHandler := handlers.NewTasksHandler(taskService)
+	taskHandler := handlers.NewTasksHandler(taskService, logger)
 
 	t := new(TaskManagementSystemServer)
 

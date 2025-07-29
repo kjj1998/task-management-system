@@ -8,9 +8,10 @@ import (
 type ErrorType string
 
 const (
-	ErrorTypeDatabase ErrorType = "DATABASE_ERROR"
-	ErrorTypeInternal ErrorType = "INTERNAL_ERROR"
-	ErrorTypeNotFound ErrorType = "NOT_FOUND"
+	ErrorTypeDatabase   ErrorType = "DATABASE_ERROR"
+	ErrorTypeInternal   ErrorType = "INTERNAL_ERROR"
+	ErrorTypeNotFound   ErrorType = "NOT_FOUND"
+	ErrorTypeBadRequest ErrorType = "BAD_REQUEST"
 )
 
 type AppError struct {
@@ -52,6 +53,15 @@ func NewInternalError(message string, err error) *AppError {
 		Type:       ErrorTypeInternal,
 		Message:    message,
 		StatusCode: http.StatusInternalServerError,
+		Err:        err,
+	}
+}
+
+func NewBadRequestError(message string, err error) *AppError {
+	return &AppError{
+		Type:       ErrorTypeBadRequest,
+		Message:    message,
+		StatusCode: http.StatusBadRequest,
 		Err:        err,
 	}
 }
