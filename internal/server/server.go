@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 
+	"github.com/kjj1998/task-management-system/internal/config"
 	"github.com/kjj1998/task-management-system/internal/database"
 	"github.com/kjj1998/task-management-system/internal/errors"
 	"github.com/kjj1998/task-management-system/internal/handlers"
@@ -22,8 +22,8 @@ type TaskManagementSystemServer struct {
 	http.Handler
 }
 
-func NewTaskManagementSystemServer(logger *slog.Logger) *TaskManagementSystemServer {
-	err := database.Connect(os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB"), logger)
+func NewTaskManagementSystemServer(cfg *config.Config, logger *slog.Logger) *TaskManagementSystemServer {
+	err := database.Connect(cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name, logger)
 	if err != nil {
 		logger.Error("server startup failed due to database connection",
 			slog.String("error", err.Error()),

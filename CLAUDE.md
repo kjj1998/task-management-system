@@ -60,6 +60,12 @@ This is a Go-based task management REST API with a clean architecture following 
 - Separate test database configuration
 
 ### Configuration
-- Requires .env file for development with DB_USER, DB_PASS, DB_HOST, DB_PORT, DB variables
+- Uses structured configuration management via `internal/config/config.go`
+- Requires .env file for development with environment variables:
+  - `ENV` - Environment (dev/prod)
+  - `SERVER_HOST`, `SERVER_PORT` - Server configuration
+  - `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_PORT`, `DB` - Database configuration
+  - `LOG_LEVEL` - Logging level
 - Uses docker-compose.yml for local MySQL instance
-- Application runs on port 8080 with `/api` prefix
+- Application runs on configurable port (default 8080) with `/api` prefix
+- Configuration includes validation and environment-specific defaults
